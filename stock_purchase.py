@@ -1,5 +1,6 @@
 # Warning control
 import warnings
+
 warnings.filterwarnings('ignore')
 from crewai import Agent, Task, Crew
 import os
@@ -11,15 +12,14 @@ os.environ["OPENAI_API_KEY"] = os.getenv('OPEN_AI_KEY')
 os.environ["OPENAI_MODEL_NAME"] = 'gpt-3.5-turbo'
 os.environ["SERPER_API_KEY"] = os.getenv('SERPER_API_KEY')
 
-
 search_tool = SerperDevTool()
 scrape_tool = ScrapeWebsiteTool()
-
 
 data_collector_agent = Agent(
     role="Data Collector",
     goal="Collect financial data from the internet, "
-         "data needed to predict the performance of a given stock.",
+         "data needed to predict the performance of a given stock."
+         "Only use website that allow access to the needed information.",
     backstory="Specializing in financial markets, this agent "
               "scrap financial websites to retrieve information about a given stock, "
               "the Data Collector Agent is the cornerstone for "
@@ -27,7 +27,7 @@ data_collector_agent = Agent(
               "the performance of a given stock.",
     verbose=True,
     allow_delegation=True,
-    tools = [scrape_tool, search_tool]
+    tools=[scrape_tool, search_tool]
 )
 
 data_analyst_agent = Agent(
@@ -41,7 +41,7 @@ data_analyst_agent = Agent(
               "informing trading decisions.",
     verbose=True,
     allow_delegation=True,
-    tools = [scrape_tool, search_tool]
+    tools=[scrape_tool, search_tool]
 )
 
 risk_management_agent = Agent(
@@ -54,7 +54,7 @@ risk_management_agent = Agent(
               "of the potential growth of a given stock.",
     verbose=True,
     allow_delegation=True,
-    tools = [scrape_tool, search_tool]
+    tools=[scrape_tool, search_tool]
 )
 stock = input("Insert stock symbol:")
 docs_scrape_tool = ScrapeWebsiteTool(
@@ -76,14 +76,15 @@ data_collector_task = Task(
 data_analysis_task = Task(
     description=(
         "Analyse company's financial data based on "
-        "based on data provided by the Data Collector and"
+        "financial data provided by the Data Collector and"
         "the selected stock ({stock_selection}). "
         "Use statistical modeling and machine learning to "
         "predict the performance of the given stock."
+        "Do not search the internet."
     ),
     expected_output=(
-        "Insights and alerts about the stock "
-        "opportunities or threats for {stock_selection}."
+        "A comprehensive data analysis report detailing "
+        "the market performance of {stock_selection}."
     ),
     agent=data_analyst_agent,
 )
@@ -93,7 +94,9 @@ risk_assessment_task = Task(
         "Evaluate the risks associated with the purchase"
         "of the {stock_selection}. "
         "Provide a detailed analysis of potential risks "
-        "and make suggestion about the purchase of a stock."
+        "and make suggestion about the purchase of a stock,"
+        "based on the data analysis report provided by the Data Analyst."
+        "Do not search the internet."
     ),
     expected_output=(
         "A comprehensive risk analysis report detailing potential "
